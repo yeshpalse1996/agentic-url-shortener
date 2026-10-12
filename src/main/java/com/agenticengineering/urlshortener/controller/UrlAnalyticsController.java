@@ -21,36 +21,28 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@Tag(
-    name = "Analytics",
-    description = "View click history, traffic statistics, and URL performance"
-)
+import com.agenticengineering.urlshortener.service.UrlAiInsightsService;
+
+@Tag(name = "Analytics", description = "View click history, traffic statistics, and URL performance")
 @RestController
 @RequestMapping("/api/urls")
 public class UrlAnalyticsController {
 
     private final UrlAnalyticsService urlAnalyticsService;
+    private final UrlAiInsightsService urlAiInsightsService;
 
     public UrlAnalyticsController(
-            UrlAnalyticsService urlAnalyticsService) {
+            UrlAnalyticsService urlAnalyticsService,
+            UrlAiInsightsService urlAiInsightsService) {
         this.urlAnalyticsService = urlAnalyticsService;
+        this.urlAiInsightsService = urlAiInsightsService;
     }
 
-    @Operation(
-        summary = "Get URL analytics",
-        description = "Returns the total click count and last-clicked timestamp for a short URL."
-    )
+    @Operation(summary = "Get URL analytics", description = "Returns the total click count and last-clicked timestamp for a short URL.")
     @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "URL analytics retrieved successfully",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = UrlAnalyticsResponse.class)
-            )
-        ),
-        @ApiResponse(responseCode = "404", description = "Short code not found"),
-        @ApiResponse(responseCode = "500", description = "Unexpected server error")
+            @ApiResponse(responseCode = "200", description = "URL analytics retrieved successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UrlAnalyticsResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Short code not found"),
+            @ApiResponse(responseCode = "500", description = "Unexpected server error")
     })
     @GetMapping("/{shortCode}/analytics")
     public ResponseEntity<UrlAnalyticsResponse> getAnalytics(
@@ -60,21 +52,11 @@ public class UrlAnalyticsController {
                 urlAnalyticsService.getAnalytics(shortCode));
     }
 
-    @Operation(
-        summary = "Get daily click analytics",
-        description = "Returns the number of clicks recorded for each day."
-    )
+    @Operation(summary = "Get daily click analytics", description = "Returns the number of clicks recorded for each day.")
     @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Daily click analytics retrieved successfully",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = DailyClickAnalytics.class)
-            )
-        ),
-        @ApiResponse(responseCode = "404", description = "Short code not found"),
-        @ApiResponse(responseCode = "500", description = "Unexpected server error")
+            @ApiResponse(responseCode = "200", description = "Daily click analytics retrieved successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DailyClickAnalytics.class))),
+            @ApiResponse(responseCode = "404", description = "Short code not found"),
+            @ApiResponse(responseCode = "500", description = "Unexpected server error")
     })
     @GetMapping("/{shortCode}/analytics/daily")
     public ResponseEntity<List<DailyClickAnalytics>> getDailyAnalytics(
@@ -84,21 +66,11 @@ public class UrlAnalyticsController {
                 urlAnalyticsService.getDailyAnalytics(shortCode));
     }
 
-    @Operation(
-        summary = "Get click history",
-        description = "Returns individual click records, including browser, operating system, device type, timestamp, and referrer."
-    )
+    @Operation(summary = "Get click history", description = "Returns individual click records, including browser, operating system, device type, timestamp, and referrer.")
     @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Click history retrieved successfully",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = ClickHistoryResponse.class)
-            )
-        ),
-        @ApiResponse(responseCode = "404", description = "Short code not found"),
-        @ApiResponse(responseCode = "500", description = "Unexpected server error")
+            @ApiResponse(responseCode = "200", description = "Click history retrieved successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ClickHistoryResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Short code not found"),
+            @ApiResponse(responseCode = "500", description = "Unexpected server error")
     })
     @GetMapping("/{shortCode}/clicks")
     public List<ClickHistoryResponse> getClickHistory(
@@ -107,21 +79,11 @@ public class UrlAnalyticsController {
         return urlAnalyticsService.getClickHistory(shortCode);
     }
 
-    @Operation(
-        summary = "Get device and browser analytics",
-        description = "Returns click statistics grouped by browser, device type, and operating system."
-    )
+    @Operation(summary = "Get device and browser analytics", description = "Returns click statistics grouped by browser, device type, and operating system.")
     @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Device analytics retrieved successfully",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = DeviceAnalyticsResponse.class)
-            )
-        ),
-        @ApiResponse(responseCode = "404", description = "Short code not found"),
-        @ApiResponse(responseCode = "500", description = "Unexpected server error")
+            @ApiResponse(responseCode = "200", description = "Device analytics retrieved successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DeviceAnalyticsResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Short code not found"),
+            @ApiResponse(responseCode = "500", description = "Unexpected server error")
     })
     @GetMapping("/{shortCode}/analytics/devices")
     public DeviceAnalyticsResponse getDeviceAnalytics(
@@ -130,21 +92,11 @@ public class UrlAnalyticsController {
         return urlAnalyticsService.getDeviceAnalytics(shortCode);
     }
 
-    @Operation(
-        summary = "Get referrer analytics",
-        description = "Returns click counts grouped by the referring source."
-    )
+    @Operation(summary = "Get referrer analytics", description = "Returns click counts grouped by the referring source.")
     @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Referrer analytics retrieved successfully",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = ReferrerStat.class)
-            )
-        ),
-        @ApiResponse(responseCode = "404", description = "Short code not found"),
-        @ApiResponse(responseCode = "500", description = "Unexpected server error")
+            @ApiResponse(responseCode = "200", description = "Referrer analytics retrieved successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ReferrerStat.class))),
+            @ApiResponse(responseCode = "404", description = "Short code not found"),
+            @ApiResponse(responseCode = "500", description = "Unexpected server error")
     })
     @GetMapping("/{shortCode}/analytics/referrers")
     public List<ReferrerStat> getReferrerAnalytics(
@@ -153,26 +105,27 @@ public class UrlAnalyticsController {
         return urlAnalyticsService.getReferrerAnalytics(shortCode);
     }
 
-    @Operation(
-        summary = "Get complete analytics dashboard",
-        description = "Returns a combined view of total clicks, daily clicks, browser statistics, device statistics, operating systems, and referrers."
-    )
+    @Operation(summary = "Get complete analytics dashboard", description = "Returns a combined view of total clicks, daily clicks, browser statistics, device statistics, operating systems, and referrers.")
     @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Analytics dashboard retrieved successfully",
-            content = @Content(
-                mediaType = "application/json",
-                schema = @Schema(implementation = AnalyticsDashboardResponse.class)
-            )
-        ),
-        @ApiResponse(responseCode = "404", description = "Short code not found"),
-        @ApiResponse(responseCode = "500", description = "Unexpected server error")
+            @ApiResponse(responseCode = "200", description = "Analytics dashboard retrieved successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = AnalyticsDashboardResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Short code not found"),
+            @ApiResponse(responseCode = "500", description = "Unexpected server error")
     })
     @GetMapping("/{shortCode}/analytics/dashboard")
     public AnalyticsDashboardResponse getDashboard(
             @PathVariable String shortCode) {
 
         return urlAnalyticsService.getDashboard(shortCode);
+    }
+
+    @GetMapping("/{shortCode}/analytics/ai")
+    public ResponseEntity<String> getAiInsights(
+            @PathVariable String shortCode) {
+
+        AnalyticsDashboardResponse dashboard = urlAnalyticsService.getDashboard(shortCode);
+
+        String insights = urlAiInsightsService.generateInsights(dashboard);
+
+        return ResponseEntity.ok(insights);
     }
 }
