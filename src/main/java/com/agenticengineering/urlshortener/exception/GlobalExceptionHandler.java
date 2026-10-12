@@ -16,6 +16,10 @@ import com.agenticengineering.urlshortener.dto.ApiErrorResponse;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -103,5 +107,15 @@ public class GlobalExceptionHandler {
                                 HttpStatus.NOT_FOUND,
                                 ex.getMessage(),
                                 request);
+        }
+
+        // Add this method inside your existing @RestControllerAdvice class
+        @ExceptionHandler(AccessDeniedException.class)
+        public ResponseEntity<String> handleAccessDenied(
+                        AccessDeniedException exception) {
+
+                return ResponseEntity
+                                .status(HttpStatus.FORBIDDEN)
+                                .body("You do not have permission to access this resource");
         }
 }

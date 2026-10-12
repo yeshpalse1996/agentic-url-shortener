@@ -8,9 +8,11 @@ import static org.mockito.Mockito.*;
 
 import java.util.Optional;
 
+import com.agenticengineering.urlshortener.entity.AppUser;
 import com.agenticengineering.urlshortener.entity.UrlClick;
 import com.agenticengineering.urlshortener.entity.UrlMapping;
 import com.agenticengineering.urlshortener.exception.UrlNotFoundException;
+import com.agenticengineering.urlshortener.repository.AppUserRepository;
 import com.agenticengineering.urlshortener.repository.UrlClickRepository;
 import com.agenticengineering.urlshortener.repository.UrlMappingRepository;
 
@@ -30,11 +32,21 @@ class UrlMappingServiceTest {
     @Mock
     private UrlClickRepository urlClickRepository;
 
+    @Mock
+    private AppUserRepository appUserRepository;
+
     @InjectMocks
     private UrlMappingService urlMappingService;
 
     @Test
     void shouldCreateShortUrlSuccessfully() {
+
+        AppUser owner = new AppUser();
+        owner.setUsername("testuser");
+        owner.setRole("USER");
+
+        when(appUserRepository.findByUsername("testuser"))
+                .thenReturn(Optional.of(owner));
 
         UrlMapping mapping = new UrlMapping();
         mapping.setOriginalUrl("https://google.com");
@@ -45,14 +57,33 @@ class UrlMappingServiceTest {
         when(urlMappingRepository.save(any(UrlMapping.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        UrlMapping result = urlMappingService.saveUrlMapping(mapping);
+        UrlMapping result =
+                urlMappingService.saveUrlMapping(mapping, "testuser");
 
         assertNotNull(result.getShortCode());
         assertEquals(7, result.getShortCode().length());
         assertEquals("https://google.com", result.getOriginalUrl());
         assertEquals(0, result.getClickCount());
+        assertSame(owner, result.getOwner());
 
+        verify(appUserRepository).findByUsername("testuser");
         verify(urlMappingRepository).save(mapping);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenOwnerDoesNotExist() {
+
+        when(appUserRepository.findByUsername("unknown"))
+                .thenReturn(Optional.empty());
+
+        UrlMapping mapping = new UrlMapping();
+        mapping.setOriginalUrl("https://google.com");
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> urlMappingService.saveUrlMapping(mapping, "unknown"));
+
+        verify(urlMappingRepository, never()).save(any(UrlMapping.class));
     }
 
     @Test
@@ -120,9 +151,7 @@ class UrlMappingServiceTest {
         assertEquals("Chrome", savedClick.getBrowser());
         assertEquals("Windows", savedClick.getOperatingSystem());
         assertEquals("Desktop", savedClick.getDeviceType());
-        assertEquals(
-                "https://example.com",
-                savedClick.getReferrer());
+        assertEquals("https://example.com", savedClick.getReferrer());
     }
 
     @Test

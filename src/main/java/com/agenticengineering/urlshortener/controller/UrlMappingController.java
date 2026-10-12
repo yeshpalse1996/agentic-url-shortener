@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.agenticengineering.urlshortener.dto.CreateUrlResponse;
 import com.agenticengineering.urlshortener.entity.UrlMapping;
 import com.agenticengineering.urlshortener.service.UrlMappingService;
 import com.agenticengineering.urlshortener.service.UserAgentService;
@@ -22,6 +23,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.springframework.security.core.Authentication;
 
 @Tag(name = "URL Management", description = "Create and manage shortened URLs")
 @RestController
@@ -50,13 +52,22 @@ public class UrlMappingController {
             @ApiResponse(responseCode = "500", description = "Unexpected server error")
     })
     @PostMapping
-    public UrlMapping createShortUrl(
-            @Valid @RequestBody CreateUrlRequest request) {
+    public CreateUrlResponse createShortUrl(
+            @Valid @RequestBody CreateUrlRequest request,Authentication authentication) {
 
-        UrlMapping mapping = new UrlMapping();
-        mapping.setOriginalUrl(request.originalUrl());
+       UrlMapping mapping = new UrlMapping();
+    mapping.setOriginalUrl(request.originalUrl());
 
-        return service.saveUrlMapping(mapping);
+    UrlMapping saved = service.saveUrlMapping(
+            mapping, authentication.getName());
+
+    return new CreateUrlResponse(
+            saved.getId(),
+            saved.getOriginalUrl(),
+            saved.getShortCode(),
+            saved.getClickCount(),
+            saved.getCreatedAt()
+    );
     }
 
     @Operation(tags = {

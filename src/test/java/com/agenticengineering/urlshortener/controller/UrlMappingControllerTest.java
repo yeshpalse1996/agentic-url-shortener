@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+import com.agenticengineering.urlshortener.dto.CreateUrlResponse;
 import com.agenticengineering.urlshortener.entity.UrlMapping;
 import com.agenticengineering.urlshortener.exception.UrlNotFoundException;
 import com.agenticengineering.urlshortener.service.UrlMappingService;
@@ -20,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 
 @ExtendWith(MockitoExtension.class)
 class UrlMappingControllerTest {
@@ -32,6 +34,9 @@ class UrlMappingControllerTest {
 
     @Mock
     private HttpServletRequest request;
+
+    @Mock
+    private Authentication authentication;
 
     @InjectMocks
     private UrlMappingController controller;
@@ -48,22 +53,30 @@ class UrlMappingControllerTest {
     @Test
     void shouldCreateShortUrlSuccessfully() {
 
-        when(service.saveUrlMapping(any(UrlMapping.class)))
+        when(authentication.getName()).thenReturn("testuser");
+
+        when(service.saveUrlMapping(
+                any(UrlMapping.class), eq("testuser")))
                 .thenAnswer(invocation -> {
                     UrlMapping input = invocation.getArgument(0);
                     input.setShortCode("TCjYQht");
                     return input;
                 });
 
-        UrlMapping result = controller.createShortUrl(
+        CreateUrlResponse result = controller.createShortUrl(
                 new UrlMappingController.CreateUrlRequest(
-                        "https://google.com"));
+                        "https://google.com"),
+                authentication);
 
         assertNotNull(result);
-        assertEquals("TCjYQht", result.getShortCode());
-        assertEquals("https://google.com", result.getOriginalUrl());
+        assertEquals(1L, result.id());
+        assertEquals("TCjYQht", result.shortCode());
+        assertEquals("https://google.com", result.originalUrl());
+        assertEquals(0L, result.clickCount());
 
-        verify(service).saveUrlMapping(any(UrlMapping.class));
+        verify(authentication).getName();
+        verify(service).saveUrlMapping(
+                any(UrlMapping.class), eq("testuser"));
     }
 
     @Test
@@ -110,18 +123,19 @@ class UrlMappingControllerTest {
     @Test
     void shouldPropagateExceptionForUnknownShortCode() {
 
+        String userAgent = "test-user-agent";
+
         when(request.getHeader("User-Agent"))
-                .thenReturn("test-user-agent");
-
-        when(userAgentService.getBrowser("test-user-agent"))
-                .thenReturn("Chrome");
-        when(userAgentService.getOperatingSystem("test-user-agent"))
-                .thenReturn("Windows");
-        when(userAgentService.getDeviceType("test-user-agent"))
-                .thenReturn("Desktop");
-
+                .thenReturn(userAgent);
         when(request.getHeader("Referer"))
                 .thenReturn(null);
+
+        when(userAgentService.getBrowser(userAgent))
+                .thenReturn("Chrome");
+        when(userAgentService.getOperatingSystem(userAgent))
+                .thenReturn("Windows");
+        when(userAgentService.getDeviceType(userAgent))
+                .thenReturn("Desktop");
 
         when(service.trackClick(
                 "missing",
@@ -129,7 +143,8 @@ class UrlMappingControllerTest {
                 "Windows",
                 "Desktop",
                 null))
-                .thenThrow(new UrlNotFoundException("Short URL not found"));
+                .thenThrow(
+                        new UrlNotFoundException("Short URL not found"));
 
         assertThrows(
                 UrlNotFoundException.class,

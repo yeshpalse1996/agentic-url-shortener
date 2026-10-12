@@ -1,8 +1,10 @@
 package com.agenticengineering.urlshortener.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -35,7 +37,8 @@ class UrlMappingControllerMockMvcTest {
     @Test
     void shouldCreateShortUrlThroughHttp() throws Exception {
 
-        when(service.saveUrlMapping(any(UrlMapping.class)))
+        when(service.saveUrlMapping(
+                any(UrlMapping.class), eq("testuser")))
                 .thenAnswer(invocation -> {
                     UrlMapping mapping = invocation.getArgument(0);
                     mapping.setShortCode("TCjYQht");
@@ -43,6 +46,8 @@ class UrlMappingControllerMockMvcTest {
                 });
 
         mockMvc.perform(post("/api/urls")
+                .with(jwt().jwt(jwt ->
+                        jwt.subject("testuser")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {
@@ -59,6 +64,8 @@ class UrlMappingControllerMockMvcTest {
     void shouldRejectInvalidUrlThroughHttp() throws Exception {
 
         mockMvc.perform(post("/api/urls")
+                .with(jwt().jwt(jwt ->
+                        jwt.subject("testuser")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {
@@ -72,6 +79,8 @@ class UrlMappingControllerMockMvcTest {
     void shouldRejectBlankUrlThroughHttp() throws Exception {
 
         mockMvc.perform(post("/api/urls")
+                .with(jwt().jwt(jwt ->
+                        jwt.subject("testuser")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {
@@ -79,6 +88,20 @@ class UrlMappingControllerMockMvcTest {
                         }
                         """))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldRequireAuthenticationToCreateShortUrl()
+            throws Exception {
+
+        mockMvc.perform(post("/api/urls")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "originalUrl": "https://google.com"
+                        }
+                        """))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

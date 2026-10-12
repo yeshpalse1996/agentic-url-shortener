@@ -1,0 +1,7 @@
+OPEN AI: UrlAiInsightsService.java
+
+What this code does
+- ChatClient.Builder — Spring AI provides the builder for interacting with the configured OpenAI model.
+- system() — defines the AI assistant's role and instructions.
+- user() — passes the analytics data for analysis.
+- call().content() — calls the model and returns its text response.
